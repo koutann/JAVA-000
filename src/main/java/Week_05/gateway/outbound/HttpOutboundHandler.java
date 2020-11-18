@@ -1,6 +1,6 @@
-package Week_03.gateway.outbound;
+package Week_05.gateway.outbound;
 
-import Week_03.gateway.router.HttpEndpointRouter;
+import Week_05.gateway.router.HttpEndpointRouter;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -8,7 +8,6 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
-import lombok.Data;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.concurrent.FutureCallback;
@@ -17,6 +16,7 @@ import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -30,13 +30,15 @@ import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @Component
-@Data
 public class HttpOutboundHandler {
     private CloseableHttpAsyncClient httpclient;
     private ExecutorService proxyService;
     private List<String> backendUrls;
 
-    public HttpOutboundHandler(List<String> backendUrls){
+    @Autowired
+    private HttpEndpointRouter httpEndpointRouter;
+
+    public void outBondHandler(List<String> backendUrls){
         List<String> urls = new ArrayList<>();
         for (String url : backendUrls) {
             url = url.endsWith("/") ? url.substring(0,url.length()-1) : url;
@@ -71,7 +73,7 @@ public class HttpOutboundHandler {
     }
 
     public void handle(final FullHttpRequest fullRequest, final ChannelHandlerContext ctx){
-        HttpEndpointRouter httpEndpointRouter = new HttpEndpointRouter();
+//        HttpEndpointRouter httpEndpointRouter = new HttpEndpointRouter();
         final String url = httpEndpointRouter.route(this.backendUrls) + fullRequest.uri();
         System.out.println("handle:url="+url);
         proxyService.submit(()->fetchGet(fullRequest, ctx, url));
